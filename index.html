@@ -1,3 +1,5 @@
+<!-- you cant skid this btw open source -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,25 +7,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord Tools</title>
     <style>
+        /* General Styling */
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f1f1f1;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            color: #333;
+            color: white;
         }
 
         .container {
             width: 100%;
             max-width: 900px;
-            background-color: white;
+            background-color: #2e2e2e;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         h1 {
@@ -33,35 +36,45 @@
             color: #6a11cb;
         }
 
+        /* Tabs */
         .tabs {
             display: flex;
             justify-content: space-around;
             margin-bottom: 20px;
-            background-color: #2575fc;
-            border-radius: 8px 8px 0 0;
+            background-color: white;
+            border-radius: 12px 12px 0 0;
             padding: 10px 0;
         }
 
         .tabs div {
-            color: white;
+            color: #333;
             font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 12px 20px;
+            border-radius: 8px;
             cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .tabs div.active {
             background-color: #6a11cb;
+            color: white;
         }
 
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        /* Section Styling */
         .section {
             margin-bottom: 20px;
         }
 
         .section label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-size: 1.2rem;
+            color: white;
         }
 
         .section input,
@@ -70,11 +83,18 @@
             padding: 12px;
             font-size: 1rem;
             border-radius: 8px;
-            border: 2px solid #ddd;
-            background-color: #fafafa;
-            color: #333;
+            border: 2px solid #555;
+            background-color: #333;
+            color: white;
             margin-bottom: 20px;
             box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .section input:focus,
+        .section textarea:focus {
+            border-color: #6a11cb;
+            outline: none;
         }
 
         .section button {
@@ -86,13 +106,14 @@
             border-radius: 8px;
             width: 100%;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background-color 0.3s ease;
         }
 
         .section button:hover {
             background-color: #2575fc;
         }
 
+        /* Status Messages */
         .status {
             text-align: center;
             font-weight: bold;
@@ -125,6 +146,9 @@
             <div id="serverInfoTab" onclick="changeTab('serverInfo')">Server Info</div>
             <div id="inviteTab" onclick="changeTab('invite')">Invite Generator</div>
             <div id="userInfoTab" onclick="changeTab('userInfo')">User Info Lookup</div>
+            <div id="channelInfoTab" onclick="changeTab('channelInfo')">Channel Info</div>
+            <div id="emojiLookupTab" onclick="changeTab('emojiLookup')">Emoji Lookup</div>
+            <div id="roleLookupTab" onclick="changeTab('roleLookup')">Role Lookup</div>
         </div>
 
         <!-- Webhook Sender -->
@@ -203,43 +227,87 @@
             <div id="userInfoStatus" class="status"></div>
         </div>
 
+        <!-- Channel Info -->
+        <div id="channelInfo" class="tab-content" style="display: none;">
+            <div class="section">
+                <label for="channelId">Channel ID:</label>
+                <input type="text" id="channelId" placeholder="Enter Channel ID" />
+            </div>
+            <div class="section">
+                <button onclick="lookupChannel()">Get Channel Info</button>
+            </div>
+            <div id="channelInfoStatus" class="status"></div>
+        </div>
+
+        <!-- Emoji Lookup -->
+        <div id="emojiLookup" class="tab-content" style="display: none;">
+            <div class="section">
+                <label for="emojiId">Emoji ID:</label>
+                <input type="text" id="emojiId" placeholder="Enter Emoji ID" />
+            </div>
+            <div class="section">
+                <button onclick="lookupEmoji()">Lookup Emoji</button>
+            </div>
+            <div id="emojiStatus" class="status"></div>
+        </div>
+
+        <!-- Role Lookup -->
+        <div id="roleLookup" class="tab-content" style="display: none;">
+            <div class="section">
+                <label for="roleId">Role ID:</label>
+                <input type="text" id="roleId" placeholder="Enter Role ID" />
+            </div>
+            <div class="section">
+                <button onclick="lookupRole()">Lookup Role</button>
+            </div>
+            <div id="roleStatus" class="status"></div>
+        </div>
     </div>
 
     <script>
-        // Switch between tabs
+        // Change Tab
         function changeTab(tabName) {
-            const tabs = document.querySelectorAll('.tabs div');
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            tabContents.forEach(content => content.style.display = 'none');
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.style.display = 'none');
+            const activeTab = document.getElementById(tabName);
+            activeTab.style.display = 'block';
+
+            // Update active tab in the navigation
+            const tabLinks = document.querySelectorAll('.tabs div');
+            tabLinks.forEach(link => link.classList.remove('active'));
             document.getElementById(tabName + 'Tab').classList.add('active');
-            document.getElementById(tabName).style.display = 'block';
         }
 
         // Webhook Sender
         function sendWebhook() {
             const url = document.getElementById("webhookUrl").value;
-            const content = document.getElementById("messageContent").value;
+            const message = document.getElementById("messageContent").value;
 
-            if (!url || !content) {
-                document.getElementById("sendStatus").innerHTML = "Please enter both webhook URL and message content.";
+            if (!url || !message) {
+                document.getElementById("sendStatus").innerHTML = "Please provide both Webhook URL and Message content.";
                 document.getElementById("sendStatus").classList.add("error");
                 return;
             }
+
+            const data = {
+                content: message
+            };
 
             fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    content: content
-                })
+                body: JSON.stringify(data)
             })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("sendStatus").innerHTML = "Webhook sent successfully!";
-                document.getElementById("sendStatus").classList.add("success");
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById("sendStatus").innerHTML = "Webhook sent successfully!";
+                    document.getElementById("sendStatus").classList.add("success");
+                } else {
+                    document.getElementById("sendStatus").innerHTML = "Error sending webhook.";
+                    document.getElementById("sendStatus").classList.add("error");
+                }
             })
             .catch(error => {
                 document.getElementById("sendStatus").innerHTML = "Error sending webhook.";
@@ -285,21 +353,23 @@
                 return;
             }
 
-            fetch(`https://lookup.discord.id/api/lookup/sendLookup?user_id=${userId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById("lookupStatus").innerHTML = `User: ${data.data.username}#${data.data.discriminator}`;
-                    document.getElementById("lookupStatus").classList.add("success");
-                } else {
-                    document.getElementById("lookupStatus").innerHTML = "User not found.";
+            const url = `https://lookup.discord.id/api/lookup/sendLookup?user_id=${userId}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById("lookupStatus").innerHTML = `User: ${data.data.username}#${data.data.discriminator}`;
+                        document.getElementById("lookupStatus").classList.add("success");
+                    } else {
+                        document.getElementById("lookupStatus").innerHTML = "User not found.";
+                        document.getElementById("lookupStatus").classList.add("error");
+                    }
+                })
+                .catch(error => {
+                    document.getElementById("lookupStatus").innerHTML = "Error looking up user.";
                     document.getElementById("lookupStatus").classList.add("error");
-                }
-            })
-            .catch(error => {
-                document.getElementById("lookupStatus").innerHTML = "Error looking up user.";
-                document.getElementById("lookupStatus").classList.add("error");
-            });
+                });
         }
 
         // Server Info Lookup
@@ -312,50 +382,25 @@
                 return;
             }
 
-            // Here you would interact with a real API to fetch the server info, for now, simulate it.
-            document.getElementById("serverInfoStatus").innerHTML = `Server Info for ID: ${serverId}.`;
-            document.getElementById("serverInfoStatus").classList.add("success");
-        }
-
-        // Invite Generator
-        function generateInvite() {
-            const channelId = document.getElementById("inviteChannel").value;
-
-            if (!channelId) {
-                document.getElementById("inviteStatus").innerHTML = "Please enter a channel ID.";
-                document.getElementById("inviteStatus").classList.add("error");
-                return;
-            }
-
-            // Simulate invite link generation
-            document.getElementById("inviteStatus").innerHTML = `Generated invite link for Channel ID: ${channelId}.`;
-            document.getElementById("inviteStatus").classList.add("success");
-        }
-
-        // User Info Lookup
-        function lookupUserInfo() {
-            const userId = document.getElementById("lookupUserId").value;
-
-            if (!userId) {
-                document.getElementById("userInfoStatus").innerHTML = "Please enter a User ID.";
-                document.getElementById("userInfoStatus").classList.add("error");
-                return;
-            }
-
-            fetch(`https://lookup.discord.id/api/lookup/sendLookup?user_id=${userId}`)
+            fetch(`https://discord.com/api/v9/guilds/${serverId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bot YOUR_BOT_TOKEN', // This part can be removed if you want to use public server data
+                },
+            })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    document.getElementById("userInfoStatus").innerHTML = `User Info: ${data.data.username}#${data.data.discriminator}`;
-                    document.getElementById("userInfoStatus").classList.add("success");
+                if (data.id) {
+                    document.getElementById("serverInfoStatus").innerHTML = `Server: ${data.name}, Members: ${data.member_count}`;
+                    document.getElementById("serverInfoStatus").classList.add("success");
                 } else {
-                    document.getElementById("userInfoStatus").innerHTML = "User info not found.";
-                    document.getElementById("userInfoStatus").classList.add("error");
+                    document.getElementById("serverInfoStatus").innerHTML = "Server not found.";
+                    document.getElementById("serverInfoStatus").classList.add("error");
                 }
             })
             .catch(error => {
-                document.getElementById("userInfoStatus").innerHTML = "Error fetching user info.";
-                document.getElementById("userInfoStatus").classList.add("error");
+                document.getElementById("serverInfoStatus").innerHTML = "Error fetching server info.";
+                document.getElementById("serverInfoStatus").classList.add("error");
             });
         }
     </script>
